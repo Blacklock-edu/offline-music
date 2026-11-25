@@ -63,11 +63,27 @@
   .title { color:var(--fg); font-weight:700; font-size:1.35em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .sub { color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-  /* home: album grid shown instead of the art when nothing is playing */
-  #home { display:none; width:100%; flex:1; min-height:0; overflow:auto; padding-top:12px; -webkit-overflow-scrolling:touch; }
-  body.home #home { display:block; }
-  body.home .art, body.home .meta { display:none; }
-  body.home main { justify-content:flex-start; }
+  /* main area views: v-home (album grid) · v-album (album page) · v-player (big art) */
+  .pane { display:none; width:100%; flex:1; min-height:0; overflow:auto; padding-top:12px; -webkit-overflow-scrolling:touch; }
+  body.v-home #home, body.v-album #album { display:block; }
+  body:not(.v-player) .art, body:not(.v-player) .meta { display:none; }
+  body:not(.v-player) main { justify-content:flex-start; }
+  .meta .btn { font-size:11px; margin-top:8px; padding:4px 0; color:var(--muted); }
+
+  /* album page */
+  .box > .t .back { color:var(--fg); }
+  .ahead { display:grid; grid-template-columns:min(38%, 150px) 1fr; gap:12px; align-items:end; margin:4px 0 12px; }
+  .ahead .cover { aspect-ratio:1; border:1px solid var(--line); display:grid; place-items:center; overflow:hidden; color:var(--bg-light);
+                  background:repeating-linear-gradient(45deg, var(--bg-dark) 0 5px, var(--bg) 5px 10px); }
+  .ahead .cover img { width:100%; height:100%; object-fit:cover; display:block; }
+  .ahead .cover svg { width:40%; height:40%; fill:currentColor; }
+  .ahead .aname { color:var(--fg); font-weight:700; font-size:1.25em; line-height:1.2; overflow-wrap:anywhere; }
+  .ahead .ainfo { color:var(--muted); font-size:11px; margin-top:4px; }
+  .aact { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
+  .pill { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--acc); color:var(--acc); border-radius:4px; padding:7px 12px; }
+  .pill.solid { background:var(--acc); color:var(--on-acc); }
+  .pill svg { width:13px; height:13px; }
+  .pill:active { opacity:.7; }
   .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:14px; }
   .tile { text-align:left; min-width:0; }
   .tile .cover { aspect-ratio:1; border:1px solid var(--line); display:grid; place-items:center; overflow:hidden; color:var(--bg-light);
@@ -173,16 +189,34 @@
   </header>
 
   <main>
-    <div id="home">
+    <div id="home" class="pane">
       <section class="box">
         <span class="t"><sup>0</sup>albums · recent</span>
         <div class="grid" id="grid"></div>
+      </section>
+    </div>
+    <div id="album" class="pane">
+      <section class="box">
+        <span class="t"><button class="back" id="album-back">‹ back</button></span>
+        <div class="ahead">
+          <div class="cover" id="album-cover"></div>
+          <div>
+            <div class="aname" id="album-name"></div>
+            <div class="ainfo" id="album-info"></div>
+            <div class="aact">
+              <button class="pill solid" id="album-play"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6z"/></svg>play</button>
+              <button class="pill" id="album-shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>shuffle</button>
+            </div>
+          </div>
+        </div>
+        <ol id="album-list"></ol>
       </section>
     </div>
     <div class="art" id="art"></div>
     <div class="meta">
       <div class="title" id="title">nothing playing</div>
       <div class="sub" id="sub">open the library to add music</div>
+      <button class="btn" id="view-album">view album</button>
     </div>
   </main>
 

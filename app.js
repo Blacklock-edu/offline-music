@@ -62,7 +62,9 @@ let baseQueue = [];         // track ids in album order (what you started playin
 let queue = [];             // actual play order (= baseQueue, or shuffled)
 let qpos = -1;
 let pendingSeek = 0;        // resume position applied once metadata loads
-let showHome = true;        // album grid instead of art: on launch, and after the queue ends
+let view = 'home';          // main area: 'home' (album grid) | 'album' (album page) | 'player' (big art)
+let albumName = null;       // album shown on the album page
+let albumFrom = 'home';     // where the album page's back button returns to
 const lastPlayed = lsGet('om-lastplayed', {}); // album name -> timestamp
 const current = () => (qpos >= 0 ? byId.get(queue[qpos]) : null);
 
@@ -265,10 +267,10 @@ function toggle() {
 }
 
 audio.addEventListener('ended', () => {
-  if (settings.repeat === 'off' && qpos === queue.length - 1) { log('ended: end of queue'); showHome = true; syncPlayState(); renderHome(); return; }
+  if (settings.repeat === 'off' && qpos === queue.length - 1) { log('ended: end of queue'); syncPlayState(); setView('home'); return; }
   next('ended');
 });
-audio.addEventListener('playing', () => { registerHandlers(); syncPlayState(); if (showHome) { showHome = false; renderHome(); } });
+audio.addEventListener('playing', () => { registerHandlers(); syncPlayState(); if (view === 'home') setView('player'); });
 audio.addEventListener('play', syncPlayState);
 audio.addEventListener('pause', () => { syncPlayState(); saveResume(); });
 audio.addEventListener('error', () => log(`audio error: code ${audio.error && audio.error.code}`));
@@ -398,7 +400,11 @@ function updatePosition() {
 function openSheet(id) { $(id).classList.add('open'); if (id === 'settings') showStorage(); }
 function closeSheets() { document.querySelectorAll('.sheet.open').forEach((s) => s.classList.remove('open')); }
 $('open-lib').onclick = () => openSheet('library');
-$('brand').onclick = () => { if (current()) { showHome = !showHome; renderHome(); } };
+$('brand').onclick = () => { if (current()) setView(view === 'player' ? 'home' : 'player'); };
+$('album-back').onclick = () => setView(albumFrom === 'player' && current() ? 'player' : 'home');
+$('view-album').onclick = () => { const t = current(); if (t) openAlbum(t.album || SINGLES, 'player'); };
+$('album-play').onclick = () => playAlbum(albumName, false);
+$('album-shuffle').onclick = () => playAlbum(albumName, true);
 $('open-set').onclick = () => openSheet('settings');
 document.querySelectorAll('.sheet .close').forEach((b) => (b.onclick = closeSheets));
 
@@ -475,6 +481,7 @@ function render() {
   if (!tracks.length) {
     ol.replaceChildren(el('li', 'empty', '~ empty — tap [+folder] or [+files]'));
     updateNow();
+    renderMain();
     return;
   }
   const cur = current();
@@ -488,7 +495,7 @@ function render() {
     const label = el('span', 'gname', `${isOpen ? '▾' : '▸'} ${name || 'singles'}`);
     const cnt = el('span', 'gcnt', String(list.length));
     const play = el('button', 'btn gbtn'); play.innerHTML = PLAY_SVG; play.setAttribute('aria-label', `Play ${name || 'singles'}`);
-    play.onclick = (e) => { e.stopPropagation(); startQueue(ids, settings.shuffle ? Math.floor(Math.random() * ids.length) : 0, 'album'); closeSheets(); };
+    play.onclick = (e) => { e.stopPropagation(); startQueue(ids, settings.shuffle ? Math.floor(Math.random() * ids.length) : 0, 'album'); closeSheets(); setView('player'); };
     const del = el('button', 'btn gbtn', '×'); del.setAttribute('aria-label', `Delete ${name || 'singles'}`);
     del.onclick = (e) => { e.stopPropagation(); deleteTracks(list, name ? `"${name}"` : 'singles'); };
     h.append(label, cnt, play, del);
@@ -500,13 +507,61 @@ function render() {
       const on = t === cur;
       const li = el('li', 'trk' + (on ? ' cur' : ''));
       li.append(el('span', 'n', on ? '▸' : String(i + 1).padStart(2, '0')), el('span', 'nm', t.title), el('span', 'd', t.duration ? fmt(t.duration) : ''));
-      li.onclick = () => { startQueue(ids, i, 'tap'); closeSheets(); };
+      li.onclick = () => { startQueue(ids, i, 'tap'); closeSheets(); setView('player'); };
       rows.push(li);
     });
   }
   ol.replaceChildren(...rows);
   updateNow();
-  renderHome();
+  renderMain();
+}
+
+function setView(v) { view = v; renderMain(); }
+function renderMain() {
+  let v = view;
+  if (v === 'player' && !current()) v = 'home';
+  if (v === 'album' && !tracks.some((t) => (t.album || SINGLES) === albumName)) v = 'home';
+  for (const k of ['home', 'album', 'player']) document.body.classList.toggle('v-' + k, k === v);
+  $('view-album').hidden = !current();
+  if (v === 'home') renderHome();
+  if (v === 'album') renderAlbum();
+}
+function albumTracks(name) { return tracks.filter((t) => (t.album || SINGLES) === name); }
+function coverInto(box, list) {
+  const withArt = list.find((t) => t.artId && artUrls.has(t.artId));
+  if (withArt) { const img = new Image(); img.src = artUrls.get(withArt.artId); img.alt = ''; box.replaceChildren(img); }
+  else box.innerHTML = NOTE_SVG;
+}
+function openAlbum(name, from) {
+  albumName = name; albumFrom = from;
+  setView('album');
+  $('album').scrollTop = 0;
+}
+function playAlbum(name, shuffle) {
+  const ids = albumTracks(name).map((t) => t.id);
+  if (!ids.length) return;
+  if (shuffle !== settings.shuffle) { settings.shuffle = shuffle; saveSettings(); syncModes(); }
+  startQueue(ids, shuffle ? Math.floor(Math.random() * ids.length) : 0, shuffle ? 'album shuffle' : 'album play');
+  setView('player');
+}
+function renderAlbum() {
+  const list = albumTracks(albumName);
+  const cur = current();
+  coverInto($('album-cover'), list);
+  $('album-name').textContent = albumName || 'singles';
+  const total = list.reduce((s, t) => s + (t.duration || 0), 0);
+  const known = list.every((t) => t.duration);
+  $('album-info').textContent = `${list.length} track${list.length === 1 ? '' : 's'}` +
+    (total ? ` · ${known ? '' : '≥'}${total >= 3600 ? Math.floor(total / 3600) + 'h ' : ''}${Math.round((total % 3600) / 60)}m` : '') +
+    ` · ${ago(lastPlayed[albumName])}`;
+  const ids = list.map((t) => t.id);
+  $('album-list').replaceChildren(...list.map((t, i) => {
+    const on = t === cur;
+    const li = el('li', 'trk' + (on ? ' cur' : ''));
+    li.append(el('span', 'n', on ? '▸' : String(i + 1).padStart(2, '0')), el('span', 'nm', t.title), el('span', 'd', t.duration ? fmt(t.duration) : ''));
+    li.onclick = () => { startQueue(ids, i, 'album tap'); setView('player'); };
+    return li;
+  }));
 }
 
 const ago = (ts) => {
@@ -515,9 +570,6 @@ const ago = (ts) => {
   return m < 1 ? 'just now' : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
 };
 function renderHome() {
-  const on = showHome || !current();
-  document.body.classList.toggle('home', on);
-  if (!on) return;
   const grid = $('grid');
   // most recently played first; never-played albums keep alphabetical order after them
   const gs = groups().sort((a, b) => (lastPlayed[b[0]] || 0) - (lastPlayed[a[0]] || 0));
@@ -530,15 +582,12 @@ function renderHome() {
   const cur = current();
   grid.replaceChildren(...gs.map(([name, list]) => {
     const tile = el('button', 'tile' + (cur && (cur.album || SINGLES) === name ? ' last' : ''));
-    tile.setAttribute('aria-label', `Play ${name || 'singles'}`);
+    tile.setAttribute('aria-label', `Open ${name || 'singles'}`);
     const cover = el('div', 'cover');
-    const withArt = list.find((t) => t.artId && artUrls.has(t.artId));
-    if (withArt) { const img = new Image(); img.src = artUrls.get(withArt.artId); img.alt = ''; cover.append(img); }
-    else cover.innerHTML = NOTE_SVG;
+    coverInto(cover, list);
     tile.append(cover, el('div', 'nm', name || 'singles'),
       el('div', 'tm', `${list.length} track${list.length === 1 ? '' : 's'} · ${ago(lastPlayed[name])}`));
-    const ids = list.map((t) => t.id);
-    tile.onclick = () => startQueue(ids, settings.shuffle ? Math.floor(Math.random() * ids.length) : 0, 'home');
+    tile.onclick = () => openAlbum(name, 'home');
     return tile;
   }));
 }
