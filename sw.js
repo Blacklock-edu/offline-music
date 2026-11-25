@@ -1,6 +1,6 @@
 // Network-first for the app shell: online launches always get the latest version,
 // offline launches fall back to the cache. Bump VERSION when the SHELL list changes.
-const VERSION = 'v3';
+const VERSION = 'v4';
 const SHELL = ['./', 'index.html', 'app.js', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png', 'fonts/jbm-400.woff2', 'fonts/jbm-700.woff2'];
 
 self.addEventListener('install', (e) => {
