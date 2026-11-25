@@ -1,6 +1,6 @@
 // Cache-first app shell so the app opens with no network. Bump VERSION when files change.
-const VERSION = 'v1';
-const SHELL = ['./', 'index.html', 'app.js', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png'];
+const VERSION = 'v2';
+const SHELL = ['./', 'index.html', 'app.js', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png', 'fonts/jbm-400.woff2', 'fonts/jbm-700.woff2'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

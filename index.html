@@ -4,64 +4,120 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Music">
-<meta name="theme-color" content="#0b1020">
+<meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>Offline Music</title>
 <style>
-  :root { --bg:#0b1020; --fg:#e8ecf5; --mute:#8a93a8; --acc:#3b82f6; --card:#151b2e; }
+  @font-face { font-family:'JBM'; src:url(fonts/jbm-400.woff2) format('woff2'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'JBM'; src:url(fonts/jbm-700.woff2) format('woff2'); font-weight:700; font-display:swap; }
+
+  /* vantablack palette */
+  :root {
+    --bg:#000; --bg-dark:#090909; --bg-light:#1a1a1a;
+    --fg:#fff; --fg-light:#ececec; --fg-dark:#505050;
+    --accent:#8d8d8d; --muted:#7a7a7a; --line:#3a3a3a; --brown:#5c5c5c;
+  }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { margin:0; background:var(--bg); color:var(--fg); font:16px -apple-system,system-ui,sans-serif;
-         padding:env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 16px); }
-  h1 { font-size:20px; margin:16px 0 8px; }
-  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-  button, label.btn { background:var(--card); color:var(--fg); border:1px solid #2a3350; border-radius:10px;
-         padding:10px 14px; font:inherit; cursor:pointer; }
-  button.primary, label.btn { background:var(--acc); border-color:var(--acc); }
+  html, body { background:var(--bg); color:var(--fg-light); }
+  body { margin:0; font:13px/1.45 'JBM', ui-monospace, Menlo, monospace;
+         padding:calc(env(safe-area-inset-top) + 10px) 10px calc(env(safe-area-inset-bottom) + 44px);
+         -webkit-user-select:none; user-select:none; }
+
+  /* btop-style box: title sits in the top border */
+  .box { position:relative; border:1px solid var(--line); border-radius:4px; padding:14px 10px 10px; margin:0 0 14px; }
+  .box > .t { position:absolute; top:-0.75em; left:8px; background:var(--bg); padding:0 4px; color:var(--fg); }
+  .box > .t sup { color:var(--muted); font-size:9px; margin-right:1px; }
+  .box > .r { position:absolute; top:-0.75em; right:8px; background:var(--bg); padding:0 4px; color:var(--muted); }
+
+  .btn { background:none; border:0; color:var(--fg-light); font:inherit; padding:6px 2px; cursor:pointer; }
+  .btn::before { content:'['; color:var(--muted); margin-right:4px; }
+  .btn::after  { content:']'; color:var(--muted); margin-left:4px; }
+  .btn:active { color:var(--bg); background:var(--fg); }
+  .btn.big { font-size:15px; font-weight:700; color:var(--fg); }
   input[type=file] { display:none; }
-  #status, #storage { color:var(--mute); font-size:13px; margin:6px 0; }
-  #now { background:var(--card); border-radius:12px; padding:12px; margin:12px 0; }
-  #now .title { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  #now .time { color:var(--mute); font-size:13px; }
-  #seek { width:100%; margin:8px 0; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+  /* now playing */
+  .np { display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center; }
+  .art { width:72px; height:72px; border:1px solid var(--line); display:grid; place-items:center;
+         color:var(--fg-dark); font-size:10px; overflow:hidden;
+         background:repeating-linear-gradient(45deg, var(--bg-dark) 0 4px, var(--bg) 4px 8px); }
+  .art img { width:100%; height:100%; object-fit:cover; display:block; }
+  .meta { min-width:0; }
+  .title { color:var(--fg); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sub { color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bar { position:relative; height:22px; margin:10px 0 2px; touch-action:none; }
+  .bar .track { position:absolute; left:0; right:0; top:10px; height:2px; background:var(--line); }
+  .bar .fill  { position:absolute; left:0; top:10px; height:2px; background:var(--fg); width:0; }
+  .bar .head  { position:absolute; top:5px; width:2px; height:12px; background:var(--fg); left:0; margin-left:-1px; }
+  .times { display:flex; justify-content:space-between; color:var(--muted); font-size:11px; }
+  .ctl { justify-content:center; gap:22px; margin-top:6px; }
+
+  /* library list, nvim/neo-tree feel */
   ol { list-style:none; padding:0; margin:0; }
-  li { padding:10px 4px; border-bottom:1px solid #1c2340; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  li.cur { color:var(--acc); font-weight:600; }
-  details { margin-top:16px; }
-  #log { font:11px ui-monospace,monospace; color:var(--mute); white-space:pre-wrap; max-height:40vh; overflow:auto; }
+  li { display:grid; grid-template-columns:3.2ch 1fr auto; gap:8px; padding:7px 4px; cursor:pointer; }
+  li .n { color:var(--fg-dark); text-align:right; }
+  li .nm { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  li .d { color:var(--fg-dark); }
+  li.cur { background:var(--bg-light); color:var(--fg); }
+  li.cur .n { color:var(--fg); }
+  li:active { background:var(--bg-light); }
+  li.empty { display:block; color:var(--muted); padding:6px 4px; cursor:default; }
+
+  #log { font-size:10px; color:var(--muted); white-space:pre-wrap; max-height:40vh; overflow:auto; margin-top:8px;
+         -webkit-user-select:text; user-select:text; }
+  details summary { color:var(--muted); cursor:pointer; list-style:none; }
+  details summary::-webkit-details-marker { display:none; }
+
+  /* lualine-style status bar */
+  #status { position:fixed; left:0; right:0; bottom:0; display:flex; align-items:stretch; background:var(--bg-dark);
+            border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom); font-size:11px; }
+  #status > span { padding:5px 8px; white-space:nowrap; }
+  #mode { background:var(--fg); color:var(--bg); font-weight:700; }
+  #pos { color:var(--fg-light); }
+  #msg { flex:1; color:var(--muted); overflow:hidden; text-overflow:ellipsis; }
+  #store { color:var(--muted); }
 </style>
 </head>
 <body>
-  <h1>Offline Music <small style="color:var(--mute);font-weight:400">spike</small></h1>
-  <div class="row">
-    <label class="btn">Import files<input id="file" type="file" multiple accept="audio/*,.mp3,.m4a,.aac,.flac,.wav,.alac"></label>
-    <button id="clear">Delete all</button>
-  </div>
-  <div id="status"></div>
-  <div id="storage"></div>
-
-  <div id="now">
-    <div class="title" id="title">Nothing playing</div>
-    <input id="seek" type="range" min="0" max="0" step="0.1" value="0">
-    <div class="row" style="justify-content:space-between">
-      <span class="time" id="time">0:00 / 0:00</span>
-      <div class="row">
-        <button id="prev">⏮</button>
-        <button id="toggle" class="primary">▶</button>
-        <button id="next">⏭</button>
+  <section class="box">
+    <span class="t"><sup>1</sup>now playing</span>
+    <span class="r" id="count">0 tracks</span>
+    <div class="np">
+      <div class="art" id="art">no art</div>
+      <div class="meta">
+        <div class="title" id="title">nothing playing</div>
+        <div class="sub" id="sub">—</div>
       </div>
     </div>
-  </div>
+    <div class="bar" id="bar"><div class="track"></div><div class="fill" id="fill"></div><div class="head" id="head"></div></div>
+    <div class="times"><span id="cur">0:00</span><span id="dur">0:00</span></div>
+    <div class="row ctl">
+      <button class="btn" id="prev">prev</button>
+      <button class="btn big" id="toggle">play</button>
+      <button class="btn" id="next">next</button>
+    </div>
+  </section>
 
-  <ol id="list"></ol>
+  <section class="box">
+    <span class="t"><sup>2</sup>library</span>
+    <span class="r"><label class="btn" style="padding:0">import<input id="file" type="file" multiple accept="audio/*,.mp3,.m4a,.aac,.flac,.wav,.alac"></label></span>
+    <ol id="list"></ol>
+  </section>
 
-  <details>
-    <summary>Debug log</summary>
-    <div class="row" style="margin:8px 0"><button id="clearlog">Clear log</button></div>
-    <div id="log"></div>
-  </details>
+  <section class="box">
+    <span class="t"><sup>3</sup>debug</span>
+    <details>
+      <summary>show log ▾</summary>
+      <div class="row" style="margin-top:6px"><button class="btn" id="clearlog">clear log</button><button class="btn" id="clear">delete all tracks</button></div>
+      <div id="log"></div>
+    </details>
+  </section>
+
+  <div id="status"><span id="mode">IDLE</span><span id="pos">0/0</span><span id="msg"></span><span id="store"></span></div>
 
   <audio id="audio" preload="auto"></audio>
   <script src="app.js"></script>
