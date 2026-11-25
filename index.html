@@ -60,11 +60,19 @@
 
   /* library list, nvim/neo-tree feel */
   ol { list-style:none; padding:0; margin:0; }
-  li { display:grid; grid-template-columns:3.2ch 1fr auto; gap:8px; padding:7px 4px; cursor:pointer; }
+  li { cursor:pointer; }
+  li.trk { display:grid; grid-template-columns:3.2ch 1fr auto; gap:8px; padding:7px 4px 7px 10px; }
+  li.grp { display:flex; align-items:center; gap:10px; padding:8px 4px; margin-top:4px; border-top:1px solid var(--bg-light); }
+  li.grp:first-child { margin-top:0; border-top:0; }
+  li.grp .gname { flex:1; min-width:0; color:var(--fg); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  li.grp.here .gname::after { content:' ♪'; color:var(--muted); font-weight:400; }
+  li.grp .gcnt { color:var(--fg-dark); }
+  li.grp .gbtn { padding:0 2px; color:var(--muted); }
+  li.grp .gbtn .ic { width:11px; height:11px; vertical-align:-1px; }
   li .n { color:var(--fg-dark); text-align:right; }
   li .nm { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   li .d { color:var(--fg-dark); }
-  li.cur { background:var(--bg-light); color:var(--fg); }
+  li.trk.cur { background:var(--bg-light); color:var(--fg); }
   li.cur .n { color:var(--fg); }
   li:active { background:var(--bg-light); }
   li.empty { display:block; color:var(--muted); padding:6px 4px; cursor:default; }
@@ -106,7 +114,10 @@
 
   <section class="box">
     <span class="t"><sup>2</sup>library</span>
-    <span class="r"><label class="btn" style="padding:0">import<input id="file" type="file" multiple accept="audio/*,.mp3,.m4a,.aac,.flac,.wav,.alac"></label></span>
+    <span class="r">
+      <label class="btn" style="padding:0">+folder<input id="folder" type="file" multiple webkitdirectory></label>
+      <label class="btn" style="padding:0;margin-left:6px">+files<input id="file" type="file" multiple accept="audio/*,.mp3,.m4a,.aac,.flac,.wav,.alac,.aif,.aiff,.ogg,.opus"></label>
+    </span>
     <ol id="list"></ol>
   </section>
 
