@@ -287,7 +287,15 @@ async function showStorage() {
 (async () => {
   log(`boot · standalone=${navigator.standalone === true || matchMedia('(display-mode: standalone)').matches}`);
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch((e) => log('SW register failed: ' + e.message));
+    // When a new service worker takes over, reload once so the new version shows immediately
+    // (skipped mid-song so an update never interrupts playback).
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (hadController && audio.paused) location.reload();
+    });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .then((r) => r.update())
+      .catch((e) => log('SW register failed: ' + e.message));
   }
   if (navigator.storage && navigator.storage.persist) {
     try { log('persist() → ' + (await navigator.storage.persist())); } catch {}
