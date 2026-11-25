@@ -14,125 +14,236 @@
   @font-face { font-family:'JBM'; src:url(fonts/jbm-400.woff2) format('woff2'); font-weight:400; font-display:swap; }
   @font-face { font-family:'JBM'; src:url(fonts/jbm-700.woff2) format('woff2'); font-weight:700; font-display:swap; }
 
-  /* vantablack palette */
+  /* vantablack palette; --acc / --on-acc are set from settings */
   :root {
     --bg:#000; --bg-dark:#090909; --bg-light:#1a1a1a;
     --fg:#fff; --fg-light:#ececec; --fg-dark:#505050;
-    --accent:#8d8d8d; --muted:#7a7a7a; --line:#3a3a3a; --brown:#5c5c5c;
+    --muted:#7a7a7a; --line:#3a3a3a;
+    --acc:#ffffff; --on-acc:#000000;
+    --fs:13px;
   }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html, body { background:var(--bg); color:var(--fg-light); }
-  body { margin:0; font:13px/1.45 'JBM', ui-monospace, Menlo, monospace;
-         padding:calc(env(safe-area-inset-top) + 10px) 10px calc(env(safe-area-inset-bottom) + 44px);
+  html, body { background:var(--bg); color:var(--fg-light); height:100%; }
+  body { margin:0; font:var(--fs)/1.45 'JBM', ui-monospace, Menlo, monospace; overflow:hidden;
          -webkit-user-select:none; user-select:none; }
+  button { font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; }
+  input[type=file] { display:none; }
+  svg.ic { width:1em; height:1em; display:block; }
+  .fill { fill:currentColor; }
+  .stroke { fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 
   /* btop-style box: title sits in the top border */
-  .box { position:relative; border:1px solid var(--line); border-radius:4px; padding:14px 10px 10px; margin:0 0 14px; }
-  .box > .t { position:absolute; top:-0.75em; left:8px; background:var(--bg); padding:0 4px; color:var(--fg); }
+  .box { position:relative; border:1px solid var(--line); border-radius:4px; padding:14px 10px 10px; }
+  .box > .t { position:absolute; top:-0.75em; left:8px; background:var(--bg); padding:0 4px; color:var(--fg);
+              max-width:65%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .box > .t sup { color:var(--muted); font-size:9px; margin-right:1px; }
   .box > .r { position:absolute; top:-0.75em; right:8px; background:var(--bg); padding:0 4px; color:var(--muted); }
 
-  .btn { background:none; border:0; color:var(--fg-light); font:inherit; padding:6px 2px; cursor:pointer; }
+  .btn { color:var(--fg-light); padding:6px 2px; }
   .btn::before { content:'['; color:var(--muted); margin-right:4px; }
   .btn::after  { content:']'; color:var(--muted); margin-left:4px; }
-  .btn:active { color:var(--bg); background:var(--fg); }
-  .btn.big { font-size:15px; font-weight:700; color:var(--fg); }
-  .btn .ic { width:14px; height:14px; fill:currentColor; vertical-align:-2px; display:inline-block; }
-  .btn.big .ic { width:18px; height:18px; vertical-align:-3px; }
-  input[type=file] { display:none; }
-  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .btn:active { color:var(--on-acc); background:var(--acc); }
 
-  /* now playing */
-  .np { display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center; }
-  .art { width:72px; height:72px; border:1px solid var(--line); display:grid; place-items:center;
-         color:var(--fg-dark); font-size:10px; overflow:hidden;
-         background:repeating-linear-gradient(45deg, var(--bg-dark) 0 4px, var(--bg) 4px 8px); }
+  /* ---------- player layout ---------- */
+  #app { height:100dvh; display:flex; flex-direction:column;
+         padding:env(safe-area-inset-top) 0 0; }
+  header { display:flex; justify-content:space-between; align-items:center; padding:4px 8px; }
+  .iconbtn { width:44px; height:44px; display:grid; place-items:center; font-size:22px; color:var(--fg-light); border-radius:4px; }
+  .iconbtn:active { background:var(--bg-light); }
+  header .brand { color:var(--muted); font-size:11px; letter-spacing:.08em; }
+
+  main { flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         padding:0 16px; gap:14px; }
+  .art { width:min(100%, calc(100dvh - 400px)); min-width:120px; aspect-ratio:1; border:1px solid var(--line);
+         display:grid; place-items:center; overflow:hidden; color:var(--bg-light);
+         background:repeating-linear-gradient(45deg, var(--bg-dark) 0 6px, var(--bg) 6px 12px); }
   .art img { width:100%; height:100%; object-fit:cover; display:block; }
-  .meta { min-width:0; }
-  .title { color:var(--fg); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .art svg { width:38%; height:38%; fill:currentColor; }
+  .meta { width:min(100%, calc(100dvh - 400px)); min-width:120px; }
+  .title { color:var(--fg); font-weight:700; font-size:1.35em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .sub { color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .bar { position:relative; height:22px; margin:10px 0 2px; touch-action:none; }
-  .bar .track { position:absolute; left:0; right:0; top:10px; height:2px; background:var(--line); }
-  .bar .fill  { position:absolute; left:0; top:10px; height:2px; background:var(--fg); width:0; }
-  .bar .head  { position:absolute; top:5px; width:2px; height:12px; background:var(--fg); left:0; margin-left:-1px; }
-  .times { display:flex; justify-content:space-between; color:var(--muted); font-size:11px; }
-  .ctl { justify-content:center; gap:22px; margin-top:6px; }
 
-  /* library list, nvim/neo-tree feel */
-  ol { list-style:none; padding:0; margin:0; }
-  li { cursor:pointer; }
-  li.trk { display:grid; grid-template-columns:3.2ch 1fr auto; gap:8px; padding:7px 4px 7px 10px; }
-  li.grp { display:flex; align-items:center; gap:10px; padding:8px 4px; margin-top:4px; border-top:1px solid var(--bg-light); }
-  li.grp:first-child { margin-top:0; border-top:0; }
-  li.grp .gname { flex:1; min-width:0; color:var(--fg); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  li.grp.here .gname::after { content:' ♪'; color:var(--muted); font-weight:400; }
-  li.grp .gcnt { color:var(--fg-dark); }
-  li.grp .gbtn { padding:0 2px; color:var(--muted); }
-  li.grp .gbtn .ic { width:11px; height:11px; vertical-align:-1px; }
-  li .n { color:var(--fg-dark); text-align:right; }
-  li .nm { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  li .d { color:var(--fg-dark); }
-  li.trk.cur { background:var(--bg-light); color:var(--fg); }
-  li.cur .n { color:var(--fg); }
-  li:active { background:var(--bg-light); }
-  li.empty { display:block; color:var(--muted); padding:6px 4px; cursor:default; }
+  footer { padding:14px 12px 10px; }
+  .bar { position:relative; height:28px; touch-action:none; }
+  .bar .track { position:absolute; left:0; right:0; top:13px; height:2px; background:var(--line); }
+  .bar .fillbar { position:absolute; left:0; top:13px; height:2px; background:var(--acc); width:0; }
+  .bar .head { position:absolute; top:6px; width:3px; height:16px; background:var(--acc); left:0; margin-left:-1px; }
+  .times { display:flex; justify-content:space-between; color:var(--muted); font-size:11px; margin-top:-2px; }
+  .ctl { display:grid; grid-template-columns:1fr 1fr auto 1fr 1fr; align-items:center; justify-items:center; margin-top:6px; }
+  .ctl .iconbtn { width:60px; height:60px; font-size:30px; }
+  .ctl .side { font-size:20px; color:var(--fg-dark); position:relative; }
+  .ctl .side.on { color:var(--acc); }
+  .ctl .side.on::after { content:''; position:absolute; bottom:10px; width:4px; height:4px; background:var(--acc); }
+  .ctl .side .one { position:absolute; font-size:9px; font-weight:700; top:13px; right:11px; }
+  #toggle { width:76px; height:76px; font-size:34px; border:1px solid var(--acc); color:var(--acc); border-radius:4px; }
+  #toggle:active { background:var(--acc); color:var(--on-acc); }
 
-  #log { font-size:10px; color:var(--muted); white-space:pre-wrap; max-height:40vh; overflow:auto; margin-top:8px;
-         -webkit-user-select:text; user-select:text; }
-  details summary { color:var(--muted); cursor:pointer; list-style:none; }
-  details summary::-webkit-details-marker { display:none; }
-
-  /* lualine-style status bar */
-  #status { position:fixed; left:0; right:0; bottom:0; display:flex; align-items:stretch; background:var(--bg-dark);
-            border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom); font-size:11px; }
+  #status { display:flex; align-items:stretch; background:var(--bg-dark); border-top:1px solid var(--line);
+            padding-bottom:env(safe-area-inset-bottom); font-size:11px; }
   #status > span { padding:5px 8px; white-space:nowrap; }
-  #mode { background:var(--fg); color:var(--bg); font-weight:700; }
-  #pos { color:var(--fg-light); }
+  #mode { background:var(--acc); color:var(--on-acc); font-weight:700; }
   #msg { flex:1; color:var(--muted); overflow:hidden; text-overflow:ellipsis; }
   #store { color:var(--muted); }
+  body.nostatus #status { display:none; }
+  body.nostatus #app { padding-bottom:env(safe-area-inset-bottom); }
+
+  /* ---------- slide-in sheets ---------- */
+  .sheet { position:fixed; inset:0; background:var(--bg); z-index:10; display:flex; flex-direction:column;
+           padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); transition:transform .22s ease, visibility .22s;
+           visibility:hidden; }
+  .sheet.open { transform:none !important; visibility:visible; }
+  #library { transform:translateX(-100%); }
+  #settings { transform:translateX(100%); }
+  .sheet header { border-bottom:1px solid var(--bg-light); }
+  .sheet header .h { color:var(--fg); font-weight:700; }
+  .sheet .body { flex:1; overflow:auto; padding:18px 12px 24px; -webkit-overflow-scrolling:touch; }
+  .sheet .box { margin-bottom:18px; }
+
+  /* library list */
+  ol { list-style:none; padding:0; margin:0; }
+  li { cursor:pointer; }
+  li.trk { display:grid; grid-template-columns:3.2ch 1fr auto; gap:8px; padding:9px 4px 9px 10px; }
+  li.trk .n { color:var(--fg-dark); text-align:right; }
+  li.trk .nm { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  li.trk .d { color:var(--fg-dark); }
+  li.trk.cur { background:var(--bg-light); color:var(--acc); }
+  li.trk.cur .n { color:var(--acc); }
+  li.trk:active { background:var(--bg-light); }
+  li.grp { display:flex; align-items:center; gap:10px; padding:10px 4px; margin-top:4px; border-top:1px solid var(--bg-light); }
+  li.grp:first-child { margin-top:0; border-top:0; }
+  li.grp .gname { flex:1; min-width:0; color:var(--fg); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  li.grp.here .gname { color:var(--acc); }
+  li.grp .gcnt { color:var(--fg-dark); }
+  li.grp .gbtn { padding:0 2px; color:var(--muted); }
+  li.grp .gbtn .ic { width:11px; height:11px; display:inline-block; vertical-align:-1px; }
+  li.empty { color:var(--muted); padding:6px 4px; cursor:default; }
+
+  /* settings */
+  .set { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 2px; }
+  .set + .set { border-top:1px solid var(--bg-light); }
+  .k { color:var(--fg-light); }
+  .k small { display:block; color:var(--muted); font-size:11px; }
+  .swatches { display:flex; flex-wrap:wrap; gap:10px; padding:8px 2px 10px; }
+  .sw { width:34px; height:34px; border:1px solid var(--line); border-radius:4px; position:relative; }
+  .sw.on { outline:2px solid var(--fg); outline-offset:2px; }
+  .sw.custom { background:conic-gradient(#e06c75,#e5c07b,#98c379,#56b6c2,#61afef,#c678dd,#e06c75); overflow:hidden; }
+  .sw.custom input { position:absolute; inset:0; opacity:0; width:100%; height:100%; border:0; padding:0; }
+  .seg { display:flex; border:1px solid var(--line); border-radius:4px; overflow:hidden; }
+  .seg button { padding:6px 12px; color:var(--muted); }
+  .seg button.on { background:var(--acc); color:var(--on-acc); }
+  .tog { width:52px; height:28px; border:1px solid var(--line); border-radius:4px; color:var(--muted); font-size:11px; }
+  .tog::after { content:'off'; }
+  .tog.on { border-color:var(--acc); color:var(--acc); }
+  .tog.on::after { content:'on'; }
+  #log { font-size:10px; color:var(--muted); white-space:pre-wrap; max-height:45vh; overflow:auto; margin-top:8px;
+         -webkit-user-select:text; user-select:text; }
 </style>
 </head>
 <body>
-  <section class="box">
-    <span class="t"><sup>1</sup>now playing</span>
-    <span class="r" id="count">0 tracks</span>
-    <div class="np">
-      <div class="art" id="art">no art</div>
-      <div class="meta">
-        <div class="title" id="title">nothing playing</div>
-        <div class="sub" id="sub">—</div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-note" viewBox="0 0 100 100"><g transform="translate(-4 0)"><path d="M51 20h6v52h-6zM57 20c0 10 6 14 12 19c7 6 9 13 5 22c2-9-2-15-9-19c-3-2-6-3-8-4z"/><ellipse cx="45" cy="72" rx="12.5" ry="9.5" transform="rotate(-22 45 72)"/></g></symbol>
+</svg>
+
+<div id="app">
+  <header>
+    <button class="iconbtn" id="open-lib" aria-label="Library">
+      <svg class="ic stroke" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+    </button>
+    <span class="brand">OFFLINE·MUSIC</span>
+    <button class="iconbtn" id="open-set" aria-label="Settings">
+      <svg class="ic stroke" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </header>
+
+  <main>
+    <div class="art" id="art"></div>
+    <div class="meta">
+      <div class="title" id="title">nothing playing</div>
+      <div class="sub" id="sub">open the library to add music</div>
+    </div>
+  </main>
+
+  <footer>
+    <section class="box">
+      <span class="t" id="qname"><sup>1</sup>queue</span>
+      <span class="r" id="pos">0/0</span>
+      <div class="bar" id="bar"><div class="track"></div><div class="fillbar" id="fill"></div><div class="head" id="head"></div></div>
+      <div class="times"><span id="cur">0:00</span><span id="dur">0:00</span></div>
+      <div class="ctl">
+        <button class="iconbtn side" id="shuffle" aria-label="Shuffle">
+          <svg class="ic stroke" viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+        </button>
+        <button class="iconbtn" id="prev" aria-label="Previous"><svg class="ic fill" viewBox="0 0 16 16"><path d="M3 2h2v12H3zM14 2v12L6 8z"/></svg></button>
+        <button class="iconbtn" id="toggle" aria-label="Play"><svg class="ic fill" viewBox="0 0 16 16"><path id="toggle-path" d="M4 2l10 6-10 6z"/></svg></button>
+        <button class="iconbtn" id="next" aria-label="Next"><svg class="ic fill" viewBox="0 0 16 16"><path d="M11 2h2v12h-2zM2 2v12l8-6z"/></svg></button>
+        <button class="iconbtn side" id="repeat" aria-label="Repeat">
+          <svg class="ic stroke" viewBox="0 0 24 24"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          <span class="one" id="repeat-one" hidden>1</span>
+        </button>
       </div>
-    </div>
-    <div class="bar" id="bar"><div class="track"></div><div class="fill" id="fill"></div><div class="head" id="head"></div></div>
-    <div class="times"><span id="cur">0:00</span><span id="dur">0:00</span></div>
-    <div class="row ctl">
-      <button class="btn" id="prev" aria-label="Previous"><svg class="ic" viewBox="0 0 16 16"><path d="M3 2h2v12H3zM14 2v12L6 8z"/></svg></button>
-      <button class="btn big" id="toggle" aria-label="Play"><svg class="ic" viewBox="0 0 16 16"><path id="toggle-path" d="M4 2l10 6-10 6z"/></svg></button>
-      <button class="btn" id="next" aria-label="Next"><svg class="ic" viewBox="0 0 16 16"><path d="M11 2h2v12h-2zM2 2v12l8-6z"/></svg></button>
-    </div>
-  </section>
+    </section>
+  </footer>
 
-  <section class="box">
-    <span class="t"><sup>2</sup>library</span>
-    <span class="r">
-      <label class="btn" style="padding:0">+folder<input id="folder" type="file" multiple webkitdirectory></label>
-      <label class="btn" style="padding:0;margin-left:6px">+files<input id="file" type="file" multiple accept="audio/*,.mp3,.m4a,.aac,.flac,.wav,.alac,.aif,.aiff,.ogg,.opus"></label>
-    </span>
-    <ol id="list"></ol>
-  </section>
+  <div id="status"><span id="mode">IDLE</span><span id="msg"></span><span id="store"></span></div>
+</div>
 
-  <section class="box">
-    <span class="t"><sup>3</sup>debug</span>
-    <details>
-      <summary>show log ▾</summary>
-      <div class="row" style="margin-top:6px"><button class="btn" id="clearlog">clear log</button><button class="btn" id="clear">delete all tracks</button></div>
+<!-- library sheet (slides from left) -->
+<div class="sheet" id="library">
+  <header>
+    <button class="iconbtn close" aria-label="Close library"><svg class="ic stroke" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="h">library</span>
+    <span style="width:44px"></span>
+  </header>
+  <div class="body">
+    <section class="box">
+      <span class="t" id="count"><sup>1</sup>0 tracks</span>
+      <span class="r">
+        <label class="btn" style="padding:0">+folder<input id="folder" type="file" multiple webkitdirectory></label>
+        <label class="btn" style="padding:0;margin-left:6px">+files<input id="file" type="file" multiple accept="audio/*,.mp3,.m4a,.aac,.flac,.wav,.alac,.aif,.aiff,.ogg,.opus"></label>
+      </span>
+      <ol id="list"></ol>
+    </section>
+  </div>
+</div>
+
+<!-- settings sheet (slides from right) -->
+<div class="sheet" id="settings">
+  <header>
+    <span style="width:44px"></span>
+    <span class="h">settings</span>
+    <button class="iconbtn close" aria-label="Close settings"><svg class="ic stroke" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+  </header>
+  <div class="body">
+    <section class="box">
+      <span class="t"><sup>1</sup>appearance</span>
+      <div class="k" style="padding:4px 2px 0">accent colour</div>
+      <div class="swatches" id="swatches"></div>
+      <div class="set"><span class="k">text size</span>
+        <div class="seg" id="size"><button data-v="12">S</button><button data-v="13">M</button><button data-v="15">L</button></div></div>
+      <div class="set"><span class="k">status bar<small>mode · messages · storage</small></span><button class="tog" id="s-status" aria-label="Status bar"></button></div>
+    </section>
+
+    <section class="box">
+      <span class="t"><sup>2</sup>playback</span>
+      <div class="set"><span class="k">resume on launch<small>reopen at the last track &amp; position</small></span><button class="tog" id="s-resume" aria-label="Resume on launch"></button></div>
+      <div class="set"><span class="k">smart previous<small>prev restarts the song if past 3s</small></span><button class="tog" id="s-smartprev" aria-label="Smart previous"></button></div>
+    </section>
+
+    <section class="box">
+      <span class="t"><sup>3</sup>storage</span>
+      <div class="set"><span class="k">used<small id="persist">—</small></span><span id="store2" style="color:var(--muted)">—</span></div>
+      <div class="set"><span class="k">all tracks</span><button class="btn" id="clear">delete all</button></div>
+    </section>
+
+    <section class="box">
+      <span class="t"><sup>4</sup>debug</span>
+      <button class="btn" id="clearlog">clear log</button>
       <div id="log"></div>
-    </details>
-  </section>
+    </section>
+  </div>
+</div>
 
-  <div id="status"><span id="mode">IDLE</span><span id="pos">0/0</span><span id="msg"></span><span id="store"></span></div>
-
-  <audio id="audio" preload="auto"></audio>
-  <script src="app.js"></script>
+<audio id="audio" preload="auto"></audio>
+<script src="app.js"></script>
 </body>
 </html>
