@@ -62,6 +62,8 @@ let baseQueue = [];         // track ids in album order (what you started playin
 let queue = [];             // actual play order (= baseQueue, or shuffled)
 let qpos = -1;
 let pendingSeek = 0;        // resume position applied once metadata loads
+let showHome = true;        // album grid instead of art: on launch, and after the queue ends
+const lastPlayed = lsGet('om-lastplayed', {}); // album name -> timestamp
 const current = () => (qpos >= 0 ? byId.get(queue[qpos]) : null);
 
 const cmp = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
@@ -238,6 +240,7 @@ function playAt(ids, pos, why) {
   const url = t && urls.get(t.id);
   if (!url) { log(`no url for ${t ? t.name : ids[pos]}`); return; }
   queue = ids; qpos = pos; pendingSeek = 0;
+  lastPlayed[t.album || SINGLES] = Date.now(); lsSet('om-lastplayed', lastPlayed);
   audio.src = url;
   const p = audio.play();
   if (p) p.catch((err) => log(`play() rejected: ${err.name} ${err.message}`));
@@ -262,10 +265,10 @@ function toggle() {
 }
 
 audio.addEventListener('ended', () => {
-  if (settings.repeat === 'off' && qpos === queue.length - 1) { log('ended: end of queue'); syncPlayState(); return; }
+  if (settings.repeat === 'off' && qpos === queue.length - 1) { log('ended: end of queue'); showHome = true; syncPlayState(); renderHome(); return; }
   next('ended');
 });
-audio.addEventListener('playing', () => { registerHandlers(); syncPlayState(); });
+audio.addEventListener('playing', () => { registerHandlers(); syncPlayState(); if (showHome) { showHome = false; renderHome(); } });
 audio.addEventListener('play', syncPlayState);
 audio.addEventListener('pause', () => { syncPlayState(); saveResume(); });
 audio.addEventListener('error', () => log(`audio error: code ${audio.error && audio.error.code}`));
@@ -395,6 +398,7 @@ function updatePosition() {
 function openSheet(id) { $(id).classList.add('open'); if (id === 'settings') showStorage(); }
 function closeSheets() { document.querySelectorAll('.sheet.open').forEach((s) => s.classList.remove('open')); }
 $('open-lib').onclick = () => openSheet('library');
+$('brand').onclick = () => { if (current()) { showHome = !showHome; renderHome(); } };
 $('open-set').onclick = () => openSheet('settings');
 document.querySelectorAll('.sheet .close').forEach((b) => (b.onclick = closeSheets));
 
@@ -502,6 +506,41 @@ function render() {
   }
   ol.replaceChildren(...rows);
   updateNow();
+  renderHome();
+}
+
+const ago = (ts) => {
+  if (!ts) return 'not played yet';
+  const m = Math.round((Date.now() - ts) / 60000);
+  return m < 1 ? 'just now' : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
+};
+function renderHome() {
+  const on = showHome || !current();
+  document.body.classList.toggle('home', on);
+  if (!on) return;
+  const grid = $('grid');
+  // most recently played first; never-played albums keep alphabetical order after them
+  const gs = groups().sort((a, b) => (lastPlayed[b[0]] || 0) - (lastPlayed[a[0]] || 0));
+  if (!gs.length) {
+    const p = el('div', 'home-empty', '~ no albums yet — ');
+    const b = el('button', 'btn', 'open library'); b.onclick = () => openSheet('library');
+    p.append(b); grid.replaceChildren(p);
+    return;
+  }
+  const cur = current();
+  grid.replaceChildren(...gs.map(([name, list]) => {
+    const tile = el('button', 'tile' + (cur && (cur.album || SINGLES) === name ? ' last' : ''));
+    tile.setAttribute('aria-label', `Play ${name || 'singles'}`);
+    const cover = el('div', 'cover');
+    const withArt = list.find((t) => t.artId && artUrls.has(t.artId));
+    if (withArt) { const img = new Image(); img.src = artUrls.get(withArt.artId); img.alt = ''; cover.append(img); }
+    else cover.innerHTML = NOTE_SVG;
+    tile.append(cover, el('div', 'nm', name || 'singles'),
+      el('div', 'tm', `${list.length} track${list.length === 1 ? '' : 's'} · ${ago(lastPlayed[name])}`));
+    const ids = list.map((t) => t.id);
+    tile.onclick = () => startQueue(ids, settings.shuffle ? Math.floor(Math.random() * ids.length) : 0, 'home');
+    return tile;
+  }));
 }
 async function showStorage() {
   if (!navigator.storage || !navigator.storage.estimate) return;

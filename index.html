@@ -63,6 +63,23 @@
   .title { color:var(--fg); font-weight:700; font-size:1.35em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .sub { color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
+  /* home: album grid shown instead of the art when nothing is playing */
+  #home { display:none; width:100%; flex:1; min-height:0; overflow:auto; padding-top:12px; -webkit-overflow-scrolling:touch; }
+  body.home #home { display:block; }
+  body.home .art, body.home .meta { display:none; }
+  body.home main { justify-content:flex-start; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:14px; }
+  .tile { text-align:left; min-width:0; }
+  .tile .cover { aspect-ratio:1; border:1px solid var(--line); display:grid; place-items:center; overflow:hidden; color:var(--bg-light);
+                 background:repeating-linear-gradient(45deg, var(--bg-dark) 0 5px, var(--bg) 5px 10px); }
+  .tile .cover img { width:100%; height:100%; object-fit:cover; display:block; }
+  .tile .cover svg { width:40%; height:40%; fill:currentColor; }
+  .tile:active .cover { border-color:var(--acc); }
+  .tile .nm { color:var(--fg); font-weight:700; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tile .tm { color:var(--muted); font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tile.last .nm { color:var(--acc); }
+  .home-empty { color:var(--muted); padding:4px 2px; }
+
   footer { padding:14px 12px 10px; }
   .bar { position:relative; height:28px; touch-action:none; }
   .bar .track { position:absolute; left:0; right:0; top:13px; height:2px; background:var(--line); }
@@ -149,13 +166,19 @@
     <button class="iconbtn" id="open-lib" aria-label="Library">
       <svg class="ic stroke" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
     </button>
-    <span class="brand">OFFLINE·MUSIC</span>
+    <button class="brand" id="brand" aria-label="Toggle album view">OFFLINE·MUSIC</button>
     <button class="iconbtn" id="open-set" aria-label="Settings">
       <svg class="ic stroke" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
   </header>
 
   <main>
+    <div id="home">
+      <section class="box">
+        <span class="t"><sup>0</sup>albums · recent</span>
+        <div class="grid" id="grid"></div>
+      </section>
+    </div>
     <div class="art" id="art"></div>
     <div class="meta">
       <div class="title" id="title">nothing playing</div>
