@@ -225,7 +225,8 @@ function updateSession() {
 }
 function syncPlayState() {
   if (ms) ms.playbackState = index < 0 ? 'none' : audio.paused ? 'paused' : 'playing';
-  $('toggle').textContent = audio.paused ? 'play' : 'pause';
+  $('toggle-path').setAttribute('d', audio.paused ? 'M4 2l10 6-10 6z' : 'M3 2h3.5v12H3zM9.5 2H13v12H9.5z');
+  $('toggle').setAttribute('aria-label', audio.paused ? 'Play' : 'Pause');
   $('mode').textContent = index < 0 ? 'IDLE' : audio.paused ? 'PAUSED' : 'PLAYING';
   updatePosition();
 }

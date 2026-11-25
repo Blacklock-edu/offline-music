@@ -37,6 +37,8 @@
   .btn::after  { content:']'; color:var(--muted); margin-left:4px; }
   .btn:active { color:var(--bg); background:var(--fg); }
   .btn.big { font-size:15px; font-weight:700; color:var(--fg); }
+  .btn .ic { width:14px; height:14px; fill:currentColor; vertical-align:-2px; display:inline-block; }
+  .btn.big .ic { width:18px; height:18px; vertical-align:-3px; }
   input[type=file] { display:none; }
   .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 
@@ -96,9 +98,9 @@
     <div class="bar" id="bar"><div class="track"></div><div class="fill" id="fill"></div><div class="head" id="head"></div></div>
     <div class="times"><span id="cur">0:00</span><span id="dur">0:00</span></div>
     <div class="row ctl">
-      <button class="btn" id="prev">prev</button>
-      <button class="btn big" id="toggle">play</button>
-      <button class="btn" id="next">next</button>
+      <button class="btn" id="prev" aria-label="Previous"><svg class="ic" viewBox="0 0 16 16"><path d="M3 2h2v12H3zM14 2v12L6 8z"/></svg></button>
+      <button class="btn big" id="toggle" aria-label="Play"><svg class="ic" viewBox="0 0 16 16"><path id="toggle-path" d="M4 2l10 6-10 6z"/></svg></button>
+      <button class="btn" id="next" aria-label="Next"><svg class="ic" viewBox="0 0 16 16"><path d="M11 2h2v12h-2zM2 2v12l8-6z"/></svg></button>
     </div>
   </section>
 
